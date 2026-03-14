@@ -121,9 +121,7 @@ npm run preview
 
 ## 📸 界面预览
 
-<p align="center">
-  <img src="./src/assets/hero.png" alt="VoicePrompt Screenshot" width="80%">
-</p>
+> 项目截图待补充，欢迎使用后提交 PR 添加！
 
 ## 🤝 参与贡献
 
