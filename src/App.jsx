@@ -139,7 +139,7 @@ export default function App() {
 
   const { history, addHistory, deleteHistory, clearHistory } = useHistory()
   const { settings, updateSetting, resetSettings } = useSettings()
-  const { apiKey, showInput, saveApiKey, clearApiKey, closeInput, hasApiKey } = useApiKey()
+  const { apiKey, showInput, saveApiKey, clearApiKey, closeInput, hasApiKey, isReady } = useApiKey()
 
   const handleTranscript = useCallback(({ final, interim }) => {
     if (final) setFinalText(prev => prev + final)
@@ -291,6 +291,38 @@ export default function App() {
             </div>
           </div>
         </header>
+
+        {/* API Key Status Bar */}
+        {isReady && (
+          <div className={`px-6 py-2 text-center text-sm ${hasApiKey ? 'bg-green-500/10 text-green-400' : 'bg-amber-500/10 text-amber-400'}`}>
+            {hasApiKey ? (
+              <span className="flex items-center justify-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-green-400"></span>
+                API Key 已配置
+                <button 
+                  onClick={() => {
+                    setTempApiKey(apiKey)
+                    setShowInput(true)
+                  }}
+                  className="text-violet-400 hover:underline ml-2"
+                >
+                  修改
+                </button>
+              </span>
+            ) : (
+              <span className="flex items-center justify-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-amber-400"></span>
+                未配置 API Key，
+                <button 
+                  onClick={() => setShowInput(true)}
+                  className="text-violet-400 hover:underline font-medium"
+                >
+                  点击配置
+                </button>
+              </span>
+            )}
+          </div>
+        )}
 
         {/* Main */}
         <main className="flex-1 px-6 py-6">

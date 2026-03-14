@@ -5,22 +5,39 @@ const STORAGE_KEY = 'voice-to-prompt-api-key'
 export function useApiKey() {
   const [apiKey, setApiKey] = useState('')
   const [showInput, setShowInput] = useState(false)
+  const [isReady, setIsReady] = useState(false)
 
   // Load API key from localStorage on mount
   useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEY)
-    if (stored) {
-      setApiKey(stored)
-    } else {
-      // Check if there's an env variable
-      const envKey = import.meta.env.VITE_API_KEY
-      if (envKey) {
-        setApiKey(envKey)
-        localStorage.setItem(STORAGE_KEY, envKey)
-      } else {
-        setShowInput(true)
+    // 延迟检查，确保 localStorage 可用
+    const checkApiKey = () => {
+      try {
+        const stored = localStorage.getItem(STORAGE_KEY)
+        if (stored) {
+          setApiKey(stored)
+        } else {
+          // Check if there's an env variable
+          const envKey = import.meta.env.VITE_API_KEY
+          if (envKey) {
+            setApiKey(envKey)
+            localStorage.setItem(STORAGE_KEY, envKey)
+          } else {
+            // 移动端延迟显示弹窗
+            setTimeout(() => {
+              setShowInput(true)
+            }, 500)
+          }
+        }
+      } catch (e) {
+        console.error('localStorage error:', e)
+        setTimeout(() => {
+          setShowInput(true)
+        }, 500)
       }
+      setIsReady(true)
     }
+
+    checkApiKey()
   }, [])
 
   const saveApiKey = useCallback((key) => {
