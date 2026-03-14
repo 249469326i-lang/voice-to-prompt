@@ -617,7 +617,8 @@ export default function App() {
             <div className="flex gap-3">
               <button
                 onClick={() => {
-                  if (saveApiKey(tempApiKey)) {
+                  const result = saveApiKey(tempApiKey)
+                  if (result.success) {
                     setTempApiKey('')
                   }
                 }}

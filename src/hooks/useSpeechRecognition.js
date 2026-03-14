@@ -10,14 +10,43 @@ export function useSpeechRecognition({ onTranscript, settings = {} }) {
 
   const { language = 'zh-CN', autoStopTimeout = 0 } = settings
 
+  // 先定义 stop
+  const stop = useCallback(() => {
+    clearTimeout(autoStopTimerRef.current)
+    if (recognitionRef.current) {
+      try {
+        recognitionRef.current.stop()
+      } catch (e) {
+        console.log('Stop error:', e)
+      }
+    }
+    setIsListening(false)
+  }, [])
+
+  // 再定义 start
   const start = useCallback(() => {
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition
-    if (!SR) return
+    if (!SR) {
+      alert('您的浏览器不支持语音识别')
+      return
+    }
+
+    // 如果已经在录音，先停止
+    if (recognitionRef.current) {
+      try {
+        recognitionRef.current.stop()
+      } catch (e) {}
+    }
 
     const recognition = new SR()
     recognition.lang = language
-    recognition.continuous = settings.continuousListening !== false
-    recognition.interimResults = settings.interimResults !== false
+    recognition.continuous = false // 移动端建议用 false
+    recognition.interimResults = true
+
+    recognition.onstart = () => {
+      console.log('Speech recognition started')
+      setIsListening(true)
+    }
 
     recognition.onresult = (e) => {
       let interim = ''
@@ -28,59 +57,45 @@ export function useSpeechRecognition({ onTranscript, settings = {} }) {
         else interim += t
       }
       onTranscript({ final, interim })
-
-      // 重置自动停止计时器
-      if (autoStopTimeout > 0) {
-        clearTimeout(autoStopTimerRef.current)
-        autoStopTimerRef.current = setTimeout(() => {
-          stop()
-        }, autoStopTimeout * 1000)
-      }
     }
 
     recognition.onerror = (e) => {
       console.error('Speech recognition error:', e.error)
-      // 忽略 aborted 错误（用户主动停止）
-      if (e.error === 'aborted') {
+      // 忽略 aborted 和 no-speech
+      if (e.error === 'aborted' || e.error === 'no-speech') {
         return
       }
-      // 移动端常见错误处理
       if (e.error === 'not-allowed') {
-        alert('请允许麦克风权限以使用语音识别功能')
+        alert('请允许麦克风权限')
       } else if (e.error === 'network') {
-        // 网络错误可能是暂时的，不显示弹窗
-        console.log('Network error, retrying...')
-      } else if (e.error === 'no-speech') {
-        // 没有检测到语音，正常情况
-        console.log('No speech detected')
+        console.log('Network error')
       }
       setIsListening(false)
     }
 
-    recognition.onend = () => setIsListening(false)
+    recognition.onend = () => {
+      console.log('Speech recognition ended')
+      setIsListening(false)
+    }
 
     recognitionRef.current = recognition
-    recognition.start()
-    setIsListening(true)
-
-    // 启动自动停止计时器
-    if (autoStopTimeout > 0) {
-      autoStopTimerRef.current = setTimeout(() => {
-        stop()
-      }, autoStopTimeout * 1000)
+    
+    try {
+      recognition.start()
+    } catch (e) {
+      console.error('Start error:', e)
+      alert('无法启动录音，请检查麦克风权限')
     }
-  }, [onTranscript, language, autoStopTimeout, settings.continuousListening, settings.interimResults])
-
-  const stop = useCallback(() => {
-    clearTimeout(autoStopTimerRef.current)
-    recognitionRef.current?.stop()
-    setIsListening(false)
-  }, [])
+  }, [onTranscript, language])
 
   useEffect(() => {
     return () => {
       clearTimeout(autoStopTimerRef.current)
-      recognitionRef.current?.stop()
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.stop()
+        } catch (e) {}
+      }
     }
   }, [])
 
