@@ -70,6 +70,7 @@ export function useApiKey() {
   return {
     apiKey,
     showInput,
+    setShowInput,
     saveApiKey,
     clearApiKey,
     openInput,

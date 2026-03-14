@@ -39,12 +39,20 @@ export function useSpeechRecognition({ onTranscript, settings = {} }) {
     }
 
     recognition.onerror = (e) => {
-      console.error('Speech recognition error:', e.error, e.message)
-      // 移动端常见错误：not-allowed（权限被拒绝）、network（网络问题）
+      console.error('Speech recognition error:', e.error)
+      // 忽略 aborted 错误（用户主动停止）
+      if (e.error === 'aborted') {
+        return
+      }
+      // 移动端常见错误处理
       if (e.error === 'not-allowed') {
         alert('请允许麦克风权限以使用语音识别功能')
       } else if (e.error === 'network') {
-        alert('网络错误，请检查网络连接')
+        // 网络错误可能是暂时的，不显示弹窗
+        console.log('Network error, retrying...')
+      } else if (e.error === 'no-speech') {
+        // 没有检测到语音，正常情况
+        console.log('No speech detected')
       }
       setIsListening(false)
     }

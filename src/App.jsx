@@ -139,7 +139,7 @@ export default function App() {
 
   const { history, addHistory, deleteHistory, clearHistory } = useHistory()
   const { settings, updateSetting, resetSettings } = useSettings()
-  const { apiKey, showInput, saveApiKey, clearApiKey, closeInput, hasApiKey, isReady } = useApiKey()
+  const { apiKey, showInput, setShowInput, saveApiKey, clearApiKey, closeInput, hasApiKey, isReady, openInput } = useApiKey()
 
   const handleTranscript = useCallback(({ final, interim }) => {
     if (final) setFinalText(prev => prev + final)
@@ -302,7 +302,7 @@ export default function App() {
                 <button 
                   onClick={() => {
                     setTempApiKey(apiKey)
-                    setShowInput(true)
+                    openInput()
                   }}
                   className="text-violet-400 hover:underline ml-2"
                 >
@@ -314,7 +314,7 @@ export default function App() {
                 <span className="w-2 h-2 rounded-full bg-amber-400"></span>
                 未配置 API Key，
                 <button 
-                  onClick={() => setShowInput(true)}
+                  onClick={() => openInput()}
                   className="text-violet-400 hover:underline font-medium"
                 >
                   点击配置
@@ -520,7 +520,7 @@ export default function App() {
                 onClick={() => {
                   setShowSettings(false)
                   setTempApiKey(apiKey)
-                  setShowInput(true)
+                  openInput()
                 }}
                 className="w-full px-4 py-2.5 text-sm text-white/80 bg-white/5 rounded-xl hover:bg-white/10 transition-colors"
               >
