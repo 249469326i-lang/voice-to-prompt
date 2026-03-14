@@ -39,7 +39,13 @@ export function useSpeechRecognition({ onTranscript, settings = {} }) {
     }
 
     recognition.onerror = (e) => {
-      console.error('Speech recognition error:', e.error)
+      console.error('Speech recognition error:', e.error, e.message)
+      // 移动端常见错误：not-allowed（权限被拒绝）、network（网络问题）
+      if (e.error === 'not-allowed') {
+        alert('请允许麦克风权限以使用语音识别功能')
+      } else if (e.error === 'network') {
+        alert('网络错误，请检查网络连接')
+      }
       setIsListening(false)
     }
 

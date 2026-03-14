@@ -363,7 +363,7 @@ export default function App() {
 
               <div className="flex items-center justify-between mt-4 pt-4 border-t border-white/10">
                 {!isSupported ? (
-                  <span className="text-sm text-amber-400">请使用 Chrome 浏览器</span>
+                  <span className="text-sm text-amber-400">您的浏览器不支持语音识别，请使用 Chrome 或 Safari</span>
                 ) : (
                   <button
                     onClick={toggleRecording}

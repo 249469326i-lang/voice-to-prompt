@@ -75,5 +75,6 @@ export function useApiKey() {
     openInput,
     closeInput,
     hasApiKey: !!apiKey,
+    isReady,
   }
 }
