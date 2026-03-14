@@ -4,13 +4,12 @@ import { useSpeechRecognition } from './hooks/useSpeechRecognition'
 import { useHistory } from './hooks/useHistory'
 import { useSettings, SUPPORTED_LANGUAGES } from './hooks/useSettings'
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts'
+import { useApiKey } from './hooks/useApiKey'
 import { PROMPT_TEMPLATES } from './data/templates'
-
-const API_KEY = import.meta.env.VITE_API_KEY || ''
 const API_URL = 'https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions'
 const MODEL = 'qwen-plus'
 
-async function refineWithAI(rawText, onChunk, onDone, onError, retryCount = 0) {
+async function refineWithAI(rawText, apiKey, onChunk, onDone, onError, retryCount = 0) {
   const MAX_RETRIES = 2
   const RETRY_DELAY = 1000
 
@@ -19,7 +18,7 @@ async function refineWithAI(rawText, onChunk, onDone, onError, retryCount = 0) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${API_KEY}`,
+        Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
         model: MODEL,
@@ -65,7 +64,7 @@ async function refineWithAI(rawText, onChunk, onDone, onError, retryCount = 0) {
     if (retryCount < MAX_RETRIES && (err.message?.includes('network') || err.message?.includes('fetch'))) {
       console.log(`Retrying... (${retryCount + 1}/${MAX_RETRIES})`)
       setTimeout(() => {
-        refineWithAI(rawText, onChunk, onDone, onError, retryCount + 1)
+        refineWithAI(rawText, apiKey, onChunk, onDone, onError, retryCount + 1)
       }, RETRY_DELAY * (retryCount + 1))
       return
     }
@@ -135,10 +134,12 @@ export default function App() {
   const [showHistory, setShowHistory] = useState(false)
   const [showTemplates, setShowTemplates] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
+  const [tempApiKey, setTempApiKey] = useState('')
   const rawScrollRef = useRef(null)
 
   const { history, addHistory, deleteHistory, clearHistory } = useHistory()
   const { settings, updateSetting, resetSettings } = useSettings()
+  const { apiKey, showInput, saveApiKey, clearApiKey, closeInput, hasApiKey } = useApiKey()
 
   const handleTranscript = useCallback(({ final, interim }) => {
     if (final) setFinalText(prev => prev + final)
@@ -169,6 +170,7 @@ export default function App() {
     let accumulatedPrompt = ''
     refineWithAI(
       raw,
+      apiKey,
       (chunk) => {
         accumulatedPrompt += chunk
         setRefinedPrompt(prev => prev + chunk)
@@ -179,7 +181,7 @@ export default function App() {
       },
       (msg) => { setError(msg); setStatus('idle') }
     )
-  }, [finalText, interimText, addHistory])
+  }, [finalText, interimText, addHistory, apiKey])
 
   const handleCopy = useCallback(() => {
     if (!refinedPrompt) return
@@ -481,9 +483,19 @@ export default function App() {
               <span className="text-sm font-medium text-white/80">实时转录</span>
               <Toggle checked={settings.interimResults} onChange={(v) => updateSetting('interimResults', v)} />
             </div>
-            <div className="pt-4 border-t border-white/10">
+            <div className="pt-4 border-t border-white/10 space-y-2">
+              <button
+                onClick={() => {
+                  setShowSettings(false)
+                  setTempApiKey(apiKey)
+                  setShowInput(true)
+                }}
+                className="w-full px-4 py-2.5 text-sm text-white/80 bg-white/5 rounded-xl hover:bg-white/10 transition-colors"
+              >
+                {hasApiKey ? '修改 API Key' : '配置 API Key'}
+              </button>
               <button onClick={resetSettings} className="w-full px-4 py-2.5 text-sm text-white/60 bg-white/5 rounded-xl hover:bg-white/10 transition-colors">
-                恢复默认
+                恢复默认设置
               </button>
             </div>
           </div>
@@ -550,6 +562,61 @@ export default function App() {
               </button>
             </div>
           )}
+        </Modal>
+      )}
+
+      {/* API Key Input Modal */}
+      {showInput && (
+        <Modal title="配置 API Key" icon={Settings2} onClose={closeInput}>
+          <div className="space-y-5">
+            <div>
+              <label className="text-sm font-medium text-white/80 mb-2 block">阿里云 DashScope API Key</label>
+              <p className="text-xs text-white/50 mb-3">
+                请访问 <a href="https://dashscope.aliyun.com/" target="_blank" rel="noopener noreferrer" className="text-violet-400 hover:underline">dashscope.aliyun.com</a> 获取 API Key
+              </p>
+              <input
+                type="password"
+                value={tempApiKey}
+                onChange={(e) => setTempApiKey(e.target.value)}
+                placeholder="sk-xxxxxxxxxx"
+                className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-sm text-white outline-none focus:border-violet-500/50 placeholder:text-white/30"
+              />
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  if (saveApiKey(tempApiKey)) {
+                    setTempApiKey('')
+                  }
+                }}
+                disabled={!tempApiKey.trim()}
+                className="flex-1 px-4 py-2.5 bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white rounded-xl font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-[0_0_20px_rgba(139,92,246,0.4)] transition-all"
+              >
+                保存
+              </button>
+              {hasApiKey && (
+                <button
+                  onClick={closeInput}
+                  className="px-4 py-2.5 bg-white/5 border border-white/10 text-white/80 rounded-xl hover:bg-white/10 transition-all"
+                >
+                  取消
+                </button>
+              )}
+            </div>
+            {hasApiKey && (
+              <div className="pt-4 border-t border-white/10">
+                <button
+                  onClick={() => {
+                    clearApiKey()
+                    setTempApiKey('')
+                  }}
+                  className="w-full px-4 py-2.5 text-sm text-red-400 bg-red-500/10 rounded-xl hover:bg-red-500/20 transition-colors"
+                >
+                  清除已保存的 API Key
+                </button>
+              </div>
+            )}
+          </div>
         </Modal>
       )}
     </div>
