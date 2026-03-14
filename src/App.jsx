@@ -448,16 +448,17 @@ export default function App() {
               </div>
 
               <div className="flex-1 relative overflow-hidden">
+                {/* 全局错误提示 */}
+                {error && (
+                  <div className="mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-sm">
+                    <div className="flex items-center justify-between">
+                      <span>错误：{error}</span>
+                      <button onClick={handleRefine} className="px-3 py-1 bg-red-500/20 rounded-lg text-red-300 text-xs">重试</button>
+                    </div>
+                  </div>
+                )}
                 {refinedPrompt ? (
                   <div className="w-full h-full p-4 bg-black/30 border border-white/10 rounded-xl overflow-auto">
-                    {error && (
-                      <div className="mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-sm">
-                        <div className="flex items-center justify-between">
-                          <span>错误：{error}</span>
-                          <button onClick={handleRefine} className="px-3 py-1 bg-red-500/20 rounded-lg text-red-300 text-xs">重试</button>
-                        </div>
-                      </div>
-                    )}
                     <pre className="whitespace-pre-wrap text-white/80 text-sm leading-relaxed font-mono">
                       {refinedPrompt}
                       {isProcessing && <span className="inline-block w-0.5 h-4 bg-violet-400 ml-1 animate-pulse" />}
@@ -624,11 +625,14 @@ export default function App() {
               <button
                 onClick={() => {
                   const result = saveApiKey(tempApiKey)
-                  if (result.success) {
+                  if (!result.success) {
+                    // 显示错误提示
+                    alert(result.error)
+                  } else {
                     setTempApiKey('')
                   }
                 }}
-                disabled={!tempApiKey.trim() || !tempApiKey.startsWith('sk-') || tempApiKey.length < 20}
+                disabled={!tempApiKey.trim()}
                 className="flex-1 px-4 py-2.5 bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white rounded-xl font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-[0_0_20px_rgba(139,92,246,0.4)] transition-all"
               >
                 保存

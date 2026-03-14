@@ -67,14 +67,20 @@ export function useApiKey() {
     // 验证格式
     const validation = validateApiKey(trimmed)
     if (!validation.valid) {
-      alert(validation.error)
+      // 使用 console.error 和返回错误，不依赖 alert
+      console.error('API Key 验证失败:', validation.error)
       return { success: false, error: validation.error }
     }
     
-    localStorage.setItem(STORAGE_KEY, trimmed)
-    setApiKey(trimmed)
-    setShowInput(false)
-    return { success: true, error: null }
+    try {
+      localStorage.setItem(STORAGE_KEY, trimmed)
+      setApiKey(trimmed)
+      setShowInput(false)
+      return { success: true, error: null }
+    } catch (e) {
+      console.error('保存失败:', e)
+      return { success: false, error: '保存失败，请检查浏览器设置' }
+    }
   }, [validateApiKey])
 
   const clearApiKey = useCallback(() => {
