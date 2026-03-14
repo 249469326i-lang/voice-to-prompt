@@ -363,7 +363,7 @@ export default function App() {
 
               <div className="flex items-center justify-between mt-4 pt-4 border-t border-white/10">
                 {!isSupported ? (
-                  <span className="text-sm text-amber-400">您的浏览器不支持语音识别，请使用 Chrome 或 Safari</span>
+                  <span className="text-sm text-amber-400">您的浏览器不支持语音，请直接输入文字</span>
                 ) : (
                   <button
                     onClick={toggleRecording}
@@ -613,6 +613,12 @@ export default function App() {
                 placeholder="sk-xxxxxxxxxx"
                 className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-sm text-white outline-none focus:border-violet-500/50 placeholder:text-white/30"
               />
+              {tempApiKey && !tempApiKey.startsWith('sk-') && (
+                <p className="text-xs text-red-400 mt-2">⚠️ API Key 应以 sk- 开头</p>
+              )}
+              {tempApiKey && tempApiKey.length > 0 && tempApiKey.length < 20 && (
+                <p className="text-xs text-red-400 mt-2">⚠️ API Key 长度不足</p>
+              )}
             </div>
             <div className="flex gap-3">
               <button
@@ -622,7 +628,7 @@ export default function App() {
                     setTempApiKey('')
                   }
                 }}
-                disabled={!tempApiKey.trim()}
+                disabled={!tempApiKey.trim() || !tempApiKey.startsWith('sk-') || tempApiKey.length < 20}
                 className="flex-1 px-4 py-2.5 bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white rounded-xl font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-[0_0_20px_rgba(139,92,246,0.4)] transition-all"
               >
                 保存

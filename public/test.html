@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>录音测试</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; background: #1a1a2e; color: white; }
+        button { padding: 15px 30px; margin: 10px; font-size: 16px; cursor: pointer; }
+        #log { margin-top: 20px; padding: 10px; background: #16213e; border-radius: 8px; }
+        .error { color: #ff6b6b; }
+        .success { color: #51cf66; }
+    </style>
+</head>
+<body>
+    <h1>录音功能测试</h1>
+    <button id="startBtn">开始录音</button>
+    <button id="stopBtn">停止录音</button>
+    <div id="log"></div>
+
+    <script>
+        const log = (msg, type = 'info') => {
+            const div = document.getElementById('log');
+            const p = document.createElement('p');
+            p.className = type;
+            p.textContent = `${new Date().toLocaleTimeString()}: ${msg}`;
+            div.appendChild(p);
+        };
+
+        // 检查支持情况
+        const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+        log(`浏览器支持语音识别: ${!!SR}`, !!SR ? 'success' : 'error');
+
+        let recognition = null;
+
+        document.getElementById('startBtn').onclick = () => {
+            if (!SR) {
+                log('浏览器不支持语音识别', 'error');
+                return;
+            }
+
+            try {
+                recognition = new SR();
+                recognition.lang = 'zh-CN';
+                recognition.continuous = false;
+                recognition.interimResults = true;
+
+                recognition.onstart = () => {
+                    log('录音已开始', 'success');
+                };
+
+                recognition.onresult = (e) => {
+                    const result = e.results[0][0].transcript;
+                    log(`识别结果: ${result}`, 'success');
+                };
+
+                recognition.onerror = (e) => {
+                    log(`错误: ${e.error}`, 'error');
+                };
+
+                recognition.onend = () => {
+                    log('录音已结束');
+                };
+
+                recognition.start();
+                log('正在请求录音权限...');
+            } catch (err) {
+                log(`启动失败: ${err.message}`, 'error');
+            }
+        };
+
+        document.getElementById('stopBtn').onclick = () => {
+            if (recognition) {
+                recognition.stop();
+                log('手动停止录音');
+            }
+        };
+    </script>
+</body>
+</html>
